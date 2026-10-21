@@ -1,19 +1,19 @@
 # Atividade de Layse - Cadastro de contato
 
 ## Requisitos das próximas telas
-- **Tela de Listagem de Contatos**
+- **Tela de Listagem de Contatos** -- ENZO
   - Exibir todos os contatos cadastrados.
   - Permitir busca por nome, e-mail ou telefone.
   - Ordenar contatos em ordem alfabética.
 
 
-- **Tela de Detalhes do Contato**
+- **Tela de Detalhes do Contato** -- ENZO
   - Visualizar informações completas do contato.
   - Exibir foto, nome, telefone, e-mail e observações.
   - Disponibilizar opções de editar e excluir.
 
 
-- **Tela de Edição de Contato**
+- **Tela de Edição de Contato** -- ENZO
   - Alterar dados já cadastrados.
   - Atualizar foto do contato.
   - Salvar ou cancelar alterações.
