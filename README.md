@@ -19,12 +19,12 @@
   - Salvar ou cancelar alterações.
 
 
-- **Tela de Favoritos**
+- **Tela de Favoritos** -- Mateus
   - Exibir contatos marcados como favoritos.
   - Permitir adicionar ou remover favoritos.
 
 
-- **Tela de Categorias**
+- **Tela de Categorias** -- Mateus
   - Criar categorias como Família, Amigos, Trabalho e Clientes.
   - Associar contatos a uma ou mais categorias.
 
