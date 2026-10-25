@@ -30,12 +30,15 @@ class MyApp extends StatelessWidget {
 }
 
 // Idealmente, seria colocar isso em um lugar separado (eu acredito) como faço em DDD e MVC, viu teteu?
+// Irmão não vou responder isso só de raiva, que peste de mensagem em comentário é essa doidoKKKKKKKKK
 class Contato {
   String nome;
   String email;
   String telefone;
   String observacoes;
   Uint8List? foto;
+  bool favorito = false;
+  List<String> categorias = [];
 
   Contato({
     required this.nome,
@@ -74,9 +77,11 @@ class TelaListagem extends StatefulWidget {
 
 class _TelaListagemState extends State<TelaListagem> {
   final List<Contato> contatos = [];
+  final List<String> categorias = ['Família', 'Amigos', 'Trabalho', 'Clientes'];
   String busca = '';
 
-  String normalizar(String texto) { // Eu acho que isso aqui não e2 lé uma ideia mto boa. Porém... Foi o quê resolveu meu problema de pesquisa
+  String normalizar(String texto) {
+    // Eu acho que isso aqui não e2 lé uma ideia mto boa. Porém... Foi o quê resolveu meu problema de pesquisa
     return texto
         .toLowerCase()
         .replaceAll(RegExp('[áàâãä]'), 'a')
@@ -109,6 +114,29 @@ class _TelaListagemState extends State<TelaListagem> {
     });
   }
 
+  Future<void> abrirFavoritos() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TelaFavoritos(contatos: contatos),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  Future<void> abrirCategorias() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            TelaCategorias(categorias: categorias, contatos: contatos),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final contatosFiltrados = contatos.where((contato) {
@@ -121,7 +149,21 @@ class _TelaListagemState extends State<TelaListagem> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Contatos')),
+      appBar: AppBar(
+        title: const Text('Contatos'),
+        actions: [
+          IconButton(
+            onPressed: abrirFavoritos,
+            tooltip: 'Favoritos',
+            icon: const Icon(Icons.star),
+          ),
+          IconButton(
+            onPressed: abrirCategorias,
+            tooltip: 'Categorias',
+            icon: const Icon(Icons.label),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -406,6 +448,251 @@ class _TelaEdicaoState extends State<TelaEdicao> {
         onPressed: salvarContato,
         tooltip: 'Salvar',
         child: const Icon(Icons.save, color: Colors.red),
+      ),
+    );
+  }
+}
+
+class TelaFavoritos extends StatefulWidget {
+  final List<Contato> contatos;
+
+  const TelaFavoritos({super.key, required this.contatos});
+
+  @override
+  State<TelaFavoritos> createState() => _TelaFavoritosState();
+}
+
+class _TelaFavoritosState extends State<TelaFavoritos> {
+  Future<void> adicionarFavorito() async {
+    final disponiveis = widget.contatos
+        .where((contato) => !contato.favorito)
+        .toList();
+    disponiveis.sort(
+      (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+    );
+    if (disponiveis.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.contatos.isEmpty
+                ? 'Nenhum contato cadastrado.'
+                : 'Todos os contatos já são favoritos.',
+          ),
+        ),
+      );
+      return;
+    }
+    final escolhido = await showDialog<Contato>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Adicionar favorito'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: disponiveis.length,
+            itemBuilder: (context, index) {
+              final contato = disponiveis[index];
+              return ListTile(
+                leading: FotoContato(foto: contato.foto, raio: 20),
+                title: Text(contato.nome),
+                subtitle: Text(contato.telefone),
+                onTap: () => Navigator.pop(context, contato),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || escolhido == null) return;
+    setState(() {
+      escolhido.favorito = true;
+    });
+  }
+
+  void removerFavorito(Contato contato) {
+    setState(() {
+      contato.favorito = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final favoritos = widget.contatos
+        .where((contato) => contato.favorito)
+        .toList();
+    favoritos.sort(
+      (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Favoritos')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: favoritos.isEmpty
+            ? const Center(child: Text('Nenhum contato favorito.'))
+            : ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: favoritos.length,
+                itemBuilder: (context, index) {
+                  final contato = favoritos[index];
+                  return ListTile(
+                    leading: FotoContato(foto: contato.foto, raio: 24),
+                    title: Text(contato.nome),
+                    subtitle: Text(contato.telefone),
+                    trailing: IconButton(
+                      onPressed: () => removerFavorito(contato),
+                      tooltip: 'Remover dos favoritos',
+                      icon: const Icon(Icons.star, color: Colors.amber),
+                    ),
+                  );
+                },
+              ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: adicionarFavorito,
+        tooltip: 'Adicionar favorito',
+        child: const Icon(Icons.add, color: Colors.red),
+      ),
+    );
+  }
+}
+
+class TelaCategorias extends StatefulWidget {
+  final List<String> categorias;
+  final List<Contato> contatos;
+
+  const TelaCategorias({
+    super.key,
+    required this.categorias,
+    required this.contatos,
+  });
+
+  @override
+  State<TelaCategorias> createState() => _TelaCategoriasState();
+}
+
+class _TelaCategoriasState extends State<TelaCategorias> {
+  final categoriaController = TextEditingController();
+
+  void criarCategoria() {
+    final nome = categoriaController.text.trim();
+    if (nome.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Informe o nome da categoria.')),
+      );
+      return;
+    }
+    final existe = widget.categorias.any(
+      (categoria) => categoria.toLowerCase() == nome.toLowerCase(),
+    );
+    if (existe) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Essa categoria já existe.')),
+      );
+      return;
+    }
+    setState(() {
+      widget.categorias.add(nome);
+      categoriaController.clear();
+    });
+  }
+
+  void alterarCategoria(Contato contato, String categoria, bool? marcado) {
+    setState(() {
+      if (marcado == true) {
+        contato.categorias.add(categoria);
+      } else {
+        contato.categorias.remove(categoria);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    categoriaController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final contatos = widget.contatos.toList();
+    contatos.sort(
+      (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+    );
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Categorias')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: categoriaController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nova categoria',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (valor) => criarCategoria(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: criarCategoria,
+                  child: const Text('Criar'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.categorias.length,
+                itemBuilder: (context, index) {
+                  final categoria = widget.categorias[index];
+                  final total = contatos
+                      .where(
+                        (contato) => contato.categorias.contains(categoria),
+                      )
+                      .length;
+                  return ExpansionTile(
+                    leading: const Icon(Icons.label),
+                    title: Text(categoria),
+                    subtitle: Text(
+                      total == 1 ? '1 contato' : '$total contatos',
+                    ),
+                    children: contatos.isEmpty
+                        ? [
+                            const ListTile(
+                              title: Text('Nenhum contato cadastrado.'),
+                            ),
+                          ]
+                        : contatos.map((contato) {
+                            return CheckboxListTile(
+                              value: contato.categorias.contains(categoria),
+                              secondary: FotoContato(
+                                foto: contato.foto,
+                                raio: 20,
+                              ),
+                              title: Text(contato.nome),
+                              onChanged: (marcado) =>
+                                  alterarCategoria(contato, categoria, marcado),
+                            );
+                          }).toList(),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
