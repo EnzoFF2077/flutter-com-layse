@@ -61,13 +61,17 @@ class _TelaArquivosState extends State<TelaArquivos> {
             .where((contato) => existentes.add(chaveContato(contato)))
             .toList();
         for (final contato in novos) {
-          for (final categoria in contato.categorias) {
-            if (!store.categorias.any(
-              (existente) => normalizar(existente) == normalizar(categoria),
-            )) {
-              store.categorias.add(categoria);
-            }
-          }
+          contato.categorias = contato.categorias
+              .map((categoria) {
+                final existente = store.categorias.where(
+                  (item) => normalizar(item) == normalizar(categoria),
+                );
+                if (existente.isNotEmpty) return existente.first;
+                store.categorias.add(categoria);
+                return categoria;
+              })
+              .toSet()
+              .toList();
         }
         store.adicionarContatos(novos);
         setState(
@@ -107,7 +111,8 @@ class _TelaArquivosState extends State<TelaArquivos> {
         ],
       ),
     );
-    if (confirmar != true || !mounted) {
+    if (!mounted) return;
+    if (confirmar != true) {
       setState(() => resultado = 'Restauração cancelada.');
       return;
     }

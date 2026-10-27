@@ -10,6 +10,7 @@ import '../models/preferencias.dart';
 class AppStore extends ChangeNotifier {
   static const _stateKey = 'agenda_estado_v2';
   static const _automaticBackupKey = 'agenda_backup_automatico';
+  static const _corruptedStateKey = 'agenda_estado_corrompido';
   SharedPreferences? _storage;
 
   final List<Contato> contatos = [];
@@ -23,7 +24,9 @@ class AppStore extends ChangeNotifier {
     if (value == null || value.isEmpty) return;
     try {
       aplicarJson(jsonDecode(value) as Map<String, dynamic>, notificar: false);
-    } catch (_) {}
+    } catch (_) {
+      await _storage!.setString(_corruptedStateKey, value);
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -37,32 +40,31 @@ class AppStore extends ChangeNotifier {
   String gerarBackup() => jsonEncode(toJson());
 
   void aplicarJson(Map<String, dynamic> json, {bool notificar = true}) {
+    final novosContatos = (json['contatos'] as List? ?? const [])
+        .map((item) => Contato.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    final novasCategorias = List<String>.from(json['categorias'] ?? const []);
+    if (novasCategorias.isEmpty) {
+      novasCategorias.addAll(['Família', 'Amigos', 'Trabalho', 'Clientes']);
+    }
+    final novosGrupos = (json['grupos'] as List? ?? const [])
+        .map((item) => Grupo.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    final preferenciasJson = json['preferencias'];
+    final novasPreferencias = preferenciasJson is Map
+        ? Preferencias.fromJson(Map<String, dynamic>.from(preferenciasJson))
+        : preferencias;
+
     contatos
       ..clear()
-      ..addAll(
-        (json['contatos'] as List? ?? const []).map(
-          (item) => Contato.fromJson(Map<String, dynamic>.from(item as Map)),
-        ),
-      );
+      ..addAll(novosContatos);
     categorias
       ..clear()
-      ..addAll(List<String>.from(json['categorias'] ?? const []));
-    if (categorias.isEmpty) {
-      categorias.addAll(['Família', 'Amigos', 'Trabalho', 'Clientes']);
-    }
+      ..addAll(novasCategorias);
     grupos
       ..clear()
-      ..addAll(
-        (json['grupos'] as List? ?? const []).map(
-          (item) => Grupo.fromJson(Map<String, dynamic>.from(item as Map)),
-        ),
-      );
-    final preferenciasJson = json['preferencias'];
-    if (preferenciasJson is Map) {
-      preferencias = Preferencias.fromJson(
-        Map<String, dynamic>.from(preferenciasJson),
-      );
-    }
+      ..addAll(novosGrupos);
+    preferencias = novasPreferencias;
     if (notificar) alterar();
   }
 

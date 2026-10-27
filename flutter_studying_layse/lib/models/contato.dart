@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../utils/ids.dart';
+
 class Contato {
   String id;
   String nome;
@@ -28,7 +30,7 @@ class Contato {
     this.foto,
     this.favorito = false,
     List<String>? categorias,
-  }) : id = id ?? DateTime.now().microsecondsSinceEpoch.toString(),
+  }) : id = id ?? gerarId(),
        dataCadastro = dataCadastro ?? DateTime.now(),
        categorias = categorias ?? [];
 

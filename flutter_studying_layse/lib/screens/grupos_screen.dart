@@ -17,32 +17,10 @@ class TelaGrupos extends StatefulWidget {
 
 class _TelaGruposState extends State<TelaGrupos> {
   Future<void> criarGrupo() async {
-    final controller = TextEditingController();
     final nome = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Novo grupo'),
-        content: TextField(
-          controller: controller,
-          inputFormatters: somenteTexto,
-          textCapitalization: TextCapitalization.words,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Nome do grupo'),
-          onSubmitted: (valor) => Navigator.pop(context, valor.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Criar'),
-          ),
-        ],
-      ),
+      builder: (context) => const _DialogoNovoGrupo(),
     );
-    controller.dispose();
     if (nome == null || nome.isEmpty || !mounted) return;
     final erro = validarSomenteTexto(nome, 'o nome do grupo');
     if (erro != null) {
@@ -144,6 +122,48 @@ class _TelaGruposState extends State<TelaGrupos> {
         onPressed: criarGrupo,
         child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class _DialogoNovoGrupo extends StatefulWidget {
+  const _DialogoNovoGrupo();
+
+  @override
+  State<_DialogoNovoGrupo> createState() => _DialogoNovoGrupoState();
+}
+
+class _DialogoNovoGrupoState extends State<_DialogoNovoGrupo> {
+  final controller = TextEditingController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Novo grupo'),
+      content: TextField(
+        controller: controller,
+        inputFormatters: somenteTexto,
+        textCapitalization: TextCapitalization.words,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: 'Nome do grupo'),
+        onSubmitted: (valor) => Navigator.pop(context, valor.trim()),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, controller.text.trim()),
+          child: const Text('Criar'),
+        ),
+      ],
     );
   }
 }
